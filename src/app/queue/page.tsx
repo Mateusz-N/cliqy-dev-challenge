@@ -81,15 +81,57 @@ const PRIORITY_DOT: Record<string, string> = {
 export default function QueuePage() {
   const [items, setItems] = useState<QueueItem[]>(SEED_ITEMS)
   const [filter, setFilter] = useState<MessageCategory | 'all'>('all')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingReply, setEditingReply] = useState('')
 
   // TODO: Zaimplementuj logikę akcji
   function handleAction(_id: string, _action: MessageStatus) {
     // Wskazówka: użyj setItems z map() — nie mutuj tablicy bezpośrednio
+    const replyEdited = editingId === _id && _action === 'approved' && editingReply.trim().length > 0
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === _id ? {
+          ...item,
+          status: _action,
+          draft_reply: replyEdited ? editingReply.trim() : item.draft_reply,
+        } : item
+      )
+    )
+
+    // Wyczyść stan edycji jeśli zatwierdzono aktualnie edytowany element
+    if(editingId === _id) {
+      setEditingId(null)
+      setEditingReply('')
+    }
   }
 
   // TODO: Zaimplementuj edycję draft_reply
   function handleEditReply(_id: string, _newReply: string) {
     // Wskazówka: j.w.
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === _id ? {
+          ...item,
+          draft_reply: _newReply,
+        } : item
+      )
+    )
+  }
+
+  function startEditing(item: QueueItem) {
+    setEditingId(item.id)
+    setEditingReply(item.draft_reply)
+  }
+
+  function cancelEditing() {
+    setEditingId(null)
+    setEditingReply('')
+  }
+
+  function saveEditing(id: string) {
+    handleEditReply(id, editingReply.trim() || '')
+    setEditingId(null)
+    setEditingReply('')
   }
 
   const visible = filter === 'all' ? items : items.filter((i) => i.category === filter)
@@ -173,13 +215,36 @@ export default function QueuePage() {
             {item.status === 'pending' && (
               <div className="flex gap-2">
                 {/* TODO: Podłącz do handleAction */}
-                <button className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-900/40 text-emerald-400 border border-emerald-700/40 hover:bg-emerald-800/50 transition-colors">
+                <button
+                    onClick={() => handleAction(item.id, 'approved')}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-900/40 text-emerald-400 border border-emerald-700/40 hover:bg-emerald-800/50 transition-colors">
                   ✅ Zatwierdź
                 </button>
-                <button className="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700 transition-colors">
-                  ✏️ Edytuj
-                </button>
-                <button className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-900/40 text-red-400 border border-red-700/40 hover:bg-red-800/50 transition-colors">
+                {editingId === item.id ? (
+                  <>
+                    <button
+                      onClick={() => saveEditing(item.id)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-100 text-zinc-900 border border-zinc-200 hover:bg-white transition-colors"
+                    >
+                      Zapisz
+                    </button>
+                    <button
+                      onClick={cancelEditing}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700 transition-colors"
+                    >
+                      Anuluj
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => startEditing(item)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700 transition-colors"
+                  >
+                    ✏️ Edytuj
+                  </button>
+                )}
+                <button
+                    onClick={() => handleAction(item.id, 'rejected')}className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-900/40 text-red-400 border border-red-700/40 hover:bg-red-800/50 transition-colors">
                   ❌ Odrzuć
                 </button>
               </div>
