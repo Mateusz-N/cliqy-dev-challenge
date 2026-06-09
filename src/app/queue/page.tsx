@@ -171,92 +171,108 @@ export default function QueuePage() {
           <p className="text-zinc-500 text-sm py-12 text-center">Brak elementów w tej kategorii.</p>
         )}
 
-        {visible.map((item) => (
-          <article
-            key={item.id}
-            className={`rounded-xl border p-5 transition-opacity ${
-              item.status !== 'pending' ? 'opacity-50' : ''
-            }`}
-            style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
-          >
-            {/* Nagłówek karty */}
-            <div className="flex items-start justify-between gap-4 mb-3">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${CATEGORY_STYLES[item.category]}`}>
-                  {item.category}
+        {visible.map((item) => {
+          const isEditing = editingId === item.id
+          return (
+            <article
+              key={item.id}
+              className={`rounded-xl border p-5 transition-opacity ${
+                item.status !== 'pending' ? 'opacity-50' : ''
+              }`}
+              style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
+            >
+              {/* Nagłówek karty */}
+              <div className="flex items-start justify-between gap-4 mb-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${CATEGORY_STYLES[item.category]}`}>
+                    {item.category}
+                  </span>
+                  <span className="flex items-center gap-1 text-xs text-zinc-500">
+                    <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[item.priority]}`} />
+                    {item.priority}
+                  </span>
+                  <span className="text-xs text-zinc-600">{item.company}</span>
+                </div>
+                <span className="text-xs text-zinc-600 shrink-0">
+                  {new Date(item.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
                 </span>
-                <span className="flex items-center gap-1 text-xs text-zinc-500">
-                  <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[item.priority]}`} />
-                  {item.priority}
-                </span>
-                <span className="text-xs text-zinc-600">{item.company}</span>
               </div>
-              <span className="text-xs text-zinc-600 shrink-0">
-                {new Date(item.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </div>
 
-            {/* Wiadomość klienta */}
-            <div className="mb-3">
-              <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Wiadomość</p>
-              <p className="text-sm text-zinc-200">{item.message}</p>
-            </div>
+              {/* Wiadomość klienta */}
+              <div className="mb-3">
+                <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Wiadomość</p>
+                <p className="text-sm text-zinc-200">{item.message}</p>
+              </div>
 
-            {/* Draft AI */}
-            <div className="mb-4 p-3 rounded-lg bg-zinc-900/60 border border-zinc-800">
-              <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">
-                Draft AI · {Math.round(item.confidence * 100)}% pewności
-              </p>
-              {/* TODO: Zamień na <textarea> z edycją */}
-              <p className="text-sm text-zinc-300">{item.draft_reply}</p>
-            </div>
-
-            {/* Akcje */}
-            {item.status === 'pending' && (
-              <div className="flex gap-2">
-                {/* TODO: Podłącz do handleAction */}
-                <button
-                    onClick={() => handleAction(item.id, 'approved')}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-900/40 text-emerald-400 border border-emerald-700/40 hover:bg-emerald-800/50 transition-colors">
-                  ✅ Zatwierdź
-                </button>
-                {editingId === item.id ? (
-                  <>
-                    <button
-                      onClick={() => saveEditing(item.id)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-100 text-zinc-900 border border-zinc-200 hover:bg-white transition-colors"
-                    >
-                      Zapisz
-                    </button>
-                    <button
-                      onClick={cancelEditing}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700 transition-colors"
-                    >
-                      Anuluj
-                    </button>
-                  </>
+              {/* Draft AI */}
+              <div className="mb-4 p-3 rounded-lg bg-zinc-900/60 border border-zinc-800">
+                <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">
+                  Draft AI · {Math.round(item.confidence * 100)}% pewności
+                </p>
+                {/* TODO: Zamień na <textarea> z edycją */}
+                {isEditing ? (
+                  <textarea
+                    value={editingReply}
+                    onChange={(e) => setEditingReply(e.target.value)}
+                    rows={4}
+                    className="w-full rounded-lg bg-zinc-950 border border-zinc-700 text-sm text-zinc-200 p-3 outline-none focus:border-zinc-500"
+                  />
                 ) : (
-                  <button
-                    onClick={() => startEditing(item)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700 transition-colors"
-                  >
-                    ✏️ Edytuj
-                  </button>
+                  <p className="text-sm text-zinc-300 whitespace-pre-wrap">{item.draft_reply}</p>
                 )}
-                <button
-                    onClick={() => handleAction(item.id, 'rejected')}className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-900/40 text-red-400 border border-red-700/40 hover:bg-red-800/50 transition-colors">
-                  ❌ Odrzuć
-                </button>
               </div>
-            )}
 
-            {item.status !== 'pending' && (
-              <p className="text-xs text-zinc-600 italic">
-                {item.status === 'approved' ? '✅ Zatwierdzone' : '❌ Odrzucone'}
-              </p>
-            )}
-          </article>
-        ))}
+              {/* Akcje */}
+              {item.status === 'pending' && (
+                /* Zapewnienie unikalności zapobiega bugom z renderowaniem */
+                <div key={`${item.id}-${isEditing ? 'edit' : 'actions'}`} className="flex gap-2">
+                  {/* TODO: Podłącz do handleAction */}
+                  {isEditing ? (
+                    <>
+                      <button
+                        onClick={() => saveEditing(item.id)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-100 text-zinc-900 border border-zinc-200 hover:bg-white transition-colors"
+                      >
+                        Zapisz
+                      </button>
+                      <button
+                        onClick={cancelEditing}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700 transition-colors"
+                      >
+                        Anuluj
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                          onClick={() => handleAction(item.id, 'approved')}
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-900/40 text-emerald-400 border border-emerald-700/40 hover:bg-emerald-800/50 transition-colors">
+                        ✅ Zatwierdź
+                      </button>
+                      <button
+                        onClick={() => startEditing(item)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700 transition-colors"
+                      >
+                        ✏️ Edytuj
+                      </button>
+                      <button
+                          onClick={() => handleAction(item.id, 'rejected')}
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-900/40 text-red-400 border border-red-700/40 hover:bg-red-800/50 transition-colors">
+                        ❌ Odrzuć
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {item.status !== 'pending' && (
+                <p className="text-xs text-zinc-600 italic">
+                  {item.status === 'approved' ? '✅ Zatwierdzone' : '❌ Odrzucone'}
+                </p>
+              )}
+            </article>
+          )
+        })}
       </div>
     </main>
   )
