@@ -84,6 +84,31 @@ export default function QueuePage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingReply, setEditingReply] = useState('')
 
+  // Własna funkcja - licznik statystyk
+  const stats = items.reduce((acc, item) => {
+    acc[item.status]++
+    acc[item.category]++
+    return acc
+  }, {
+    approved: 0,
+    rejected: 0,
+    pending: 0,
+    zamówienie: 0,
+    pytanie: 0,
+    reklamacja: 0,
+    spam: 0,
+  })
+  const categories: MessageCategory[] = [
+    'zamówienie',
+    'pytanie',
+    'reklamacja',
+    'spam',
+  ]
+
+  const mostFrequentCategory = categories.reduce((best, cat) => {
+    return stats[cat] > stats[best] ? cat : best
+  }, categories[0])
+
   // TODO: Zaimplementuj logikę akcji
   function handleAction(_id: string, _action: MessageStatus) {
     // Wskazówka: użyj setItems z map() — nie mutuj tablicy bezpośrednio
@@ -147,6 +172,27 @@ export default function QueuePage() {
           {pending} oczekujących · {items.length} łącznie
         </p>
       </div>
+
+      {/* ── Statystyki ─────────────────────── */}
+      <div className="mb-6 grid grid-cols-3 gap-3">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+          <p className="text-xs text-zinc-500">Oczekujące</p>
+          <p className="text-lg font-semibold text-zinc-200">{stats.pending}</p>
+        </div>
+
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+          <p className="text-xs text-zinc-500">Zatwierdzone</p>
+          <p className="text-lg font-semibold text-emerald-400">{stats.approved}</p>
+        </div>
+
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+          <p className="text-xs text-zinc-500">Odrzucone</p>
+          <p className="text-lg font-semibold text-red-400">{stats.rejected}</p>
+        </div>
+      </div>
+      <p className="text-xs text-zinc-500 mb-4">
+        Dominująca kategoria: <span className="text-zinc-300">{mostFrequentCategory}</span>
+      </p>
 
       {/* ── Filtr kategorii ────────────────── */}
       <div className="flex gap-2 mb-6 flex-wrap">
